@@ -57,9 +57,9 @@ export const reachedPickupHandler = async (req, res, next) => {
 // POST /api/driver/ride/start
 export const startRideHandler = async (req, res, next) => {
   try {
-    const { rideId } = req.body;
-    const ride = await startRide(rideId, req.driver.id);
-    if (!ride) return errorResponse(res, 'Ride not found for this driver', 404);
+    const { rideId, otp } = req.body;
+    const ride = await startRide(rideId, req.driver.id, otp);
+    if (!ride) return errorResponse(res, 'Invalid OTP or ride not found', 400);
     return successResponse(res, ride, 'Ride started');
   } catch (err) {
     next(err);

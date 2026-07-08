@@ -4,7 +4,7 @@ import {
   assignDriverToRide,
   rejectRideForDriver,
   markArrived,
-  markStarted,
+  verifyRideOtpAndStart,
   markCompleted,
   getRideHistory,
 } from '../repositories/ride.repository.js';
@@ -39,6 +39,7 @@ const toRideJson = (row) => ({
   arrivedAt: row.arrived_at,
   startedAt: row.started_at,
   completedAt: row.completed_at,
+  rideOtp: row.ride_otp,
 });
 
 export const getIncomingRide = async (driverId) => {
@@ -70,8 +71,8 @@ export const reachedPickup = async (rideId, driverId) => {
   return rideJson;
 };
 
-export const startRide = async (rideId, driverId) => {
-  const ride = await markStarted(rideId, driverId);
+export const startRide = async (rideId, driverId, otp) => {
+  const ride = await verifyRideOtpAndStart(rideId, driverId, otp);
   if (!ride) return null;
   const rideJson = toRideJson(ride);
   notifyCustomerRideUpdate(ride.passenger_id, rideJson);

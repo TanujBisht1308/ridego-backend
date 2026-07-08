@@ -8,7 +8,7 @@ import {
   completeRideHandler,
   getRideHistoryHandler,
 } from '../controllers/ride.controller.js';
-import { rideIdValidator } from '../validators/ride.validator.js';
+import { rideIdValidator ,startRideValidator} from '../validators/ride.validator.js';
 import { validate } from '../middleware/validate.middleware.js';
 import { authenticate } from '../middleware/auth.middleware.js';
 
@@ -20,7 +20,7 @@ router.get('/incoming', getIncomingRideHandler);
 router.post('/accept', rideIdValidator, validate, acceptRideHandler);
 router.post('/reject', rideIdValidator, validate, rejectRideHandler);
 router.post('/reached-pickup', rideIdValidator, validate, reachedPickupHandler);
-router.post('/start', rideIdValidator, validate, startRideHandler);
+router.post('/start', startRideValidator, validate, startRideHandler);
 router.post('/complete', rideIdValidator, validate, completeRideHandler);
 router.get('/history', getRideHistoryHandler);
 

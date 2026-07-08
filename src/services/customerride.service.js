@@ -13,6 +13,7 @@ import {
 import { findById as findCustomerById } from '../repositories/customer.repository.js';
 
 import { notifyNewRideToDrivers } from '../sockets/socketManager.js';
+import { verifyRideOtpAndStart } from '../repositories/ride.repository.js';
 
 const computeTrip = (pickupLat, pickupLng, dropLat, dropLng) => {
   const hasCoords = [pickupLat, pickupLng, dropLat, dropLng].every((v) => typeof v === 'number');
@@ -54,6 +55,7 @@ const toRideJson = (row) => ({
   distanceKm: Number(row.distance_km),
   durationMinutes: row.duration_minutes,
   paymentMethod: row.payment_method,
+  rideotp: row.ride_otp,
   requestedAt: row.requested_at,
   acceptedAt: row.accepted_at,
   arrivedAt: row.arrived_at,

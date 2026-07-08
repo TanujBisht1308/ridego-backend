@@ -19,13 +19,26 @@ export const findRideById = async (rideId) => {
   return result.rows[0] || null;
 };
 
+const generateRideOtp = () => Math.floor(1000 + Math.random() * 9000).toString();
+
 export const assignDriverToRide = async (rideId, driverId) => {
+  const otp = generateRideOtp();
   const result = await pool.query(
     `UPDATE rides
-     SET driver_id = $1, status = 'accepted', accepted_at = NOW()
+     SET driver_id = $1, status = 'accepted', accepted_at = NOW(), ride_otp = $3
      WHERE id = $2 AND status = 'pending'
      RETURNING *`,
-    [driverId, rideId]
+    [driverId, rideId, otp]
+  );
+  return result.rows[0] || null;
+};
+export const verifyRideOtpAndStart = async (rideId, driverId, otp) => {
+  const result = await pool.query(
+    `UPDATE rides
+     SET status = 'inProgress', started_at = NOW()
+     WHERE id = $1 AND driver_id = $2 AND ride_otp = $3
+     RETURNING *`,
+    [rideId, driverId, otp]
   );
   return result.rows[0] || null;
 };
