@@ -6,6 +6,8 @@ import { Server } from 'socket.io';
 import { verifyAccessToken } from '../config/jwt.js';
 import { findById as findDriverById } from '../repositories/driver.repository.js';
 import { findById as findCustomerById } from '../repositories/customer.repository.js';
+import { pool } from '../config/db.js';
+import { sendPushNotification } from '../utils/pushNotification.js';
 
 let io;
 
@@ -14,7 +16,6 @@ export const initSocket = (httpServer) => {
     cors: { origin: '*' },
   });
 
-  // Auth handshake — client passes { token, role } in `auth` on connect.
   io.use(async (socket, next) => {
     try {
       const { token, role } = socket.handshake.auth || {};
@@ -57,8 +58,6 @@ export const initSocket = (httpServer) => {
       console.log(`Customer connected: ${socket.data.customerId}`);
     }
 
-    // Driver streams their GPS position while online. rideId lets us also
-    // relay it into a ride-specific room the customer is watching.
     socket.on('driver:location', ({ latitude, longitude, rideId }) => {
       if (socket.data.role !== 'driver') return;
       if (rideId) {
@@ -66,7 +65,6 @@ export const initSocket = (httpServer) => {
       }
     });
 
-    // Customer opens live tracking for a specific ride — joins that ride's room.
     socket.on('ride:watch', ({ rideId }) => {
       if (socket.data.role !== 'customer') return;
       socket.join(`ride:${rideId}`);
@@ -76,8 +74,6 @@ export const initSocket = (httpServer) => {
       socket.leave(`ride:${rideId}`);
     });
 
-    // Driver joins a ride's room too, once assigned, so their own location
-    // events (above) actually have somewhere to broadcast into.
     socket.on('ride:join', ({ rideId }) => {
       socket.join(`ride:${rideId}`);
     });
@@ -95,20 +91,77 @@ export const getIO = () => {
   return io;
 };
 
+// ---- Helpers to fetch tokens for push (kept local to avoid circular imports) ----
+
+const getDriverFcmTokensForVehicleType = async (vehicleType) => {
+  const result = await pool.query(
+    `SELECT fcm_token FROM drivers
+     WHERE vehicle_type = $1 AND is_online = true AND fcm_token IS NOT NULL`,
+    [vehicleType]
+  );
+  return result.rows.map((r) => r.fcm_token);
+};
+
+const getCustomerFcmToken = async (customerId) => {
+  const result = await pool.query('SELECT fcm_token FROM customers WHERE id = $1', [customerId]);
+  return result.rows[0]?.fcm_token || null;
+};
+
+const getDriverFcmToken = async (driverId) => {
+  const result = await pool.query('SELECT fcm_token FROM drivers WHERE id = $1', [driverId]);
+  return result.rows[0]?.fcm_token || null;
+};
+
 // ---- Emit helpers used by services elsewhere in the app ----
+// Each now fires the socket event (for apps that are open/backgrounded)
+// AND a push notification (for apps that are fully closed). Push failures
+// are swallowed — sockets remain the primary channel, push is a backup.
 
 // New ride request → push to every online driver of the matching vehicle type.
-export const notifyNewRideToDrivers = (vehicleType, ride) => {
+export const notifyNewRideToDrivers = async (vehicleType, ride) => {
   getIO().to(`vehicleType:${vehicleType}`).emit('ride:incoming', ride);
+
+  const tokens = await getDriverFcmTokensForVehicleType(vehicleType);
+  await Promise.all(
+    tokens.map((token) =>
+      sendPushNotification(token, {
+        title: 'New Ride Request',
+        body: `${ride.pickupLocation.address} → ${ride.dropLocation.address}`,
+        data: { type: 'ride_request', rideId: ride.rideId },
+      })
+    )
+  );
 };
 
 // Ride accepted/arrived/started/completed/cancelled → push to that customer.
-export const notifyCustomerRideUpdate = (customerId, ride) => {
+export const notifyCustomerRideUpdate = async (customerId, ride) => {
   getIO().to(`customer:${customerId}`).emit('ride:update', ride);
+
+  const statusMessages = {
+    accepted: 'Your driver is on the way!',
+    driverArrived: 'Your driver has arrived',
+    inProgress: 'Your ride has started',
+    completed: 'You have arrived at your destination',
+    cancelled: 'Your ride was cancelled',
+  };
+  const body = statusMessages[ride.status] || 'Your ride status has updated';
+
+  const token = await getCustomerFcmToken(customerId);
+  await sendPushNotification(token, {
+    title: 'RideGo',
+    body,
+    data: { type: 'ride_update', rideId: ride.rideId, status: ride.status },
+  });
 };
 
-// Tell a specific driver a ride they saw got taken by someone else (so
-// their incoming-ride card disappears instantly instead of waiting on poll).
+// Tell a specific driver a ride they saw got taken by someone else.
 export const notifyRideTaken = (vehicleType, rideId) => {
   getIO().to(`vehicleType:${vehicleType}`).emit('ride:taken', { rideId });
+};
+
+// New — driver-specific push (used when driver's own ride status changes,
+// e.g. if you later add driver-side notifications beyond in-app sockets).
+export const notifyDriverPush = async (driverId, { title, body, data }) => {
+  const token = await getDriverFcmToken(driverId);
+  await sendPushNotification(token, { title, body, data });
 };

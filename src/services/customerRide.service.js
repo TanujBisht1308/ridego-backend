@@ -97,7 +97,7 @@ export const requestRide = async (customerId, data) => {
     paymentMethod: data.paymentMethod || 'Cash',
   });
 
-  notifyNewRideToDrivers(data.vehicleType, toRideJson(ride));
+  await notifyNewRideToDrivers(data.vehicleType, toRideJson(ride));
   return toRideJson(ride);
 };
 export const getActiveRide = async (customerId) => {

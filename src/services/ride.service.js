@@ -54,7 +54,7 @@ export const acceptRide = async (rideId, driverId) => {
   const ride = await assignDriverToRide(rideId, driverId);
   if (!ride) return null;
   const rideJson = toRideJson(ride);
-  notifyCustomerRideUpdate(ride.passenger_id, rideJson);
+  await notifyCustomerRideUpdate(ride.passenger_id, rideJson);
   notifyRideTaken(ride.vehicle_type, rideId);
   return rideJson;
 };
@@ -67,7 +67,7 @@ export const reachedPickup = async (rideId, driverId) => {
   const ride = await markArrived(rideId, driverId);
   if (!ride) return null;
   const rideJson = toRideJson(ride);
-  notifyCustomerRideUpdate(ride.passenger_id, rideJson);
+  await notifyCustomerRideUpdate(ride.passenger_id, rideJson);
   return rideJson;
 };
 
@@ -75,7 +75,7 @@ export const startRide = async (rideId, driverId, otp) => {
   const ride = await verifyRideOtpAndStart(rideId, driverId, otp);
   if (!ride) return null;
   const rideJson = toRideJson(ride);
-  notifyCustomerRideUpdate(ride.passenger_id, rideJson);
+  await notifyCustomerRideUpdate(ride.passenger_id, rideJson);
   return rideJson;
 };
 export const completeRide = async (rideId, driverId) => {
@@ -102,7 +102,7 @@ export const completeRide = async (rideId, driverId) => {
     completedAt: completed.completed_at,
   };
 
-  notifyCustomerRideUpdate(completed.passenger_id, { ...summary, status: 'completed' });
+  await notifyCustomerRideUpdate(completed.passenger_id, { ...summary, status: 'completed' });
   return summary;
 };
 export const fetchRideHistory = async (driverId, status, page, limit) => {
