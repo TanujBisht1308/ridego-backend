@@ -55,7 +55,7 @@ const toRideJson = (row) => ({
   distanceKm: Number(row.distance_km),
   durationMinutes: row.duration_minutes,
   paymentMethod: row.payment_method,
-  rideotp: row.ride_otp,
+  rideOtp: row.ride_otp,
   requestedAt: row.requested_at,
   acceptedAt: row.accepted_at,
   arrivedAt: row.arrived_at,
@@ -130,6 +130,7 @@ export const fetchCustomerRideHistory = async (customerId, status, page, limit) 
       ...r,
       fare: r.fare ? Number(r.fare) : null,
       distanceKm: r.distanceKm ? Number(r.distanceKm) : null,
+      rideOtp: r.rideOtp ? r.rideOtp : null,
     })),
   };
 };
