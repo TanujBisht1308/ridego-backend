@@ -75,3 +75,8 @@ export const getDashboardStats = async (driverId) => {
     rating: driver.rating,
   };
 };
+import { updateFcmToken as saveDriverFcmToken } from '../repositories/driver.repository.js';
+
+export const registerFcmToken = async (driverId, token) => {
+  await saveDriverFcmToken(driverId, token);
+};

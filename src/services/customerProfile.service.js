@@ -19,3 +19,8 @@ export const saveCustomerProfile = async (customerId, data) => {
   const customer = await updateProfile(customerId, data);
   return toPublicCustomer(customer);
 };
+import { updateFcmToken as saveCustomerFcmToken } from '../repositories/customer.repository.js';
+
+export const registerCustomerFcmToken = async (customerId, token) => {
+  await saveCustomerFcmToken(customerId, token);
+};

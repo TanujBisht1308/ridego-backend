@@ -106,3 +106,6 @@ export const getTodaysEarnings = async (driverId) => {
 export const incrementTotalRides = async (driverId) => {
   await pool.query('UPDATE drivers SET total_rides = total_rides + 1 WHERE id = $1', [driverId]);
 };
+export const updateFcmToken = async (driverId, token) => {
+  await pool.query('UPDATE drivers SET fcm_token = $1 WHERE id = $2', [token, driverId]);
+};

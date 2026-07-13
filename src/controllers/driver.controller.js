@@ -57,3 +57,14 @@ export const getDashboardStatsHandler = async (req, res, next) => {
     next(err);
   }
 };
+import { registerFcmToken } from '../services/driver.service.js';
+
+export const registerFcmTokenHandler = async (req, res, next) => {
+  try {
+    const { fcmToken } = req.body;
+    await registerFcmToken(req.driver.id, fcmToken);
+    return successResponse(res, null, 'FCM token registered');
+  } catch (err) {
+    next(err);
+  }
+};

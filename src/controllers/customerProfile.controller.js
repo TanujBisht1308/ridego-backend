@@ -20,3 +20,14 @@ export const updateProfileHandler = async (req, res, next) => {
     next(err);
   }
 };
+import { registerCustomerFcmToken } from '../services/customerProfile.service.js';
+
+export const registerFcmTokenHandler = async (req, res, next) => {
+  try {
+    const { fcmToken } = req.body;
+    await registerCustomerFcmToken(req.customer.id, fcmToken);
+    return successResponse(res, null, 'FCM token registered');
+  } catch (err) {
+    next(err);
+  }
+};

@@ -10,5 +10,7 @@ router.use(authenticateCustomer);
 
 router.get('/profile', getProfileHandler);
 router.put('/profile', updateProfileValidator, validate, updateProfileHandler);
+import { registerFcmTokenHandler } from '../controllers/customerProfile.controller.js';
 
+router.post('/fcm-token', registerFcmTokenHandler);
 export default router;

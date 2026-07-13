@@ -21,5 +21,7 @@ router.post('/documents/submit', submitDocumentsHandler);
 // Phase 6
 router.patch('/status', toggleStatusHandler);
 router.get('/dashboard/stats', getDashboardStatsHandler);
+import { registerFcmTokenHandler } from '../controllers/driver.controller.js';
 
+router.post('/fcm-token', registerFcmTokenHandler);
 export default router;

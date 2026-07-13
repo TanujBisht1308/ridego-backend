@@ -29,3 +29,6 @@ export const updateProfile = async (customerId, { fullName, email }) => {
   );
   return result.rows[0];
 };
+export const updateFcmToken = async (customerId, token) => {
+  await pool.query('UPDATE customers SET fcm_token = $1 WHERE id = $2', [token, customerId]);
+};
