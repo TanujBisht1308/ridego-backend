@@ -7,7 +7,7 @@ import { verifyAccessToken } from '../config/jwt.js';
 import { findById as findDriverById } from '../repositories/driver.repository.js';
 import { findById as findCustomerById } from '../repositories/customer.repository.js';
 import { pool } from '../config/db.js';
-import { sendPushNotification } from '../utils/pushnotification.js';
+import { sendPushNotification } from '../utils/pushNotification.js';
 
 let io;
 
