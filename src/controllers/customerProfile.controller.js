@@ -31,3 +31,55 @@ export const registerFcmTokenHandler = async (req, res, next) => {
     next(err);
   }
 };
+import {
+  fetchSavedPlaces,
+  addSavedPlace,
+  editSavedPlace,
+  removeSavedPlace,
+} from '../services/customerProfile.service.js';
+
+export const getSavedPlacesHandler = async (req, res, next) => {
+  try {
+    const places = await fetchSavedPlaces(req.customer.id);
+    return successResponse(res, places, 'Saved places fetched');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const createSavedPlaceHandler = async (req, res, next) => {
+  try {
+    const { label, address, latitude, longitude, icon } = req.body;
+    const place = await addSavedPlace(req.customer.id, { label, address, latitude, longitude, icon });
+    return successResponse(res, place, 'Saved place added', 201);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateSavedPlaceHandler = async (req, res, next) => {
+  try {
+    const { label, address, latitude, longitude, icon } = req.body;
+    const fields = {};
+    if (label !== undefined) fields.label = label;
+    if (address !== undefined) fields.address = address;
+    if (latitude !== undefined) fields.latitude = latitude;
+    if (longitude !== undefined) fields.longitude = longitude;
+    if (icon !== undefined) fields.icon = icon;
+
+    const place = await editSavedPlace(req.customer.id, req.params.id, fields);
+    if (!place) return errorResponse(res, 'Saved place not found', 404);
+    return successResponse(res, place, 'Saved place updated');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteSavedPlaceHandler = async (req, res, next) => {
+  try {
+    await removeSavedPlace(req.customer.id, req.params.id);
+    return successResponse(res, null, 'Saved place deleted');
+  } catch (err) {
+    next(err);
+  }
+};

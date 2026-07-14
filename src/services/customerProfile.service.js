@@ -24,3 +24,37 @@ import { updateFcmToken as saveCustomerFcmToken } from '../repositories/customer
 export const registerCustomerFcmToken = async (customerId, token) => {
   await saveCustomerFcmToken(customerId, token);
 };
+import {
+  getSavedPlaces,
+  createSavedPlace,
+  updateSavedPlaceById,
+  deleteSavedPlaceById,
+} from '../repositories/customer.repository.js';
+
+const toPublicPlace = (row) => ({
+  id: row.id,
+  label: row.label,
+  address: row.address,
+  latitude: row.latitude != null ? Number(row.latitude) : null,
+  longitude: row.longitude != null ? Number(row.longitude) : null,
+  icon: row.icon,
+});
+
+export const fetchSavedPlaces = async (customerId) => {
+  const rows = await getSavedPlaces(customerId);
+  return rows.map(toPublicPlace);
+};
+
+export const addSavedPlace = async (customerId, data) => {
+  const row = await createSavedPlace(customerId, data);
+  return toPublicPlace(row);
+};
+
+export const editSavedPlace = async (customerId, placeId, data) => {
+  const row = await updateSavedPlaceById(customerId, placeId, data);
+  return row ? toPublicPlace(row) : null;
+};
+
+export const removeSavedPlace = async (customerId, placeId) => {
+  await deleteSavedPlaceById(customerId, placeId);
+};

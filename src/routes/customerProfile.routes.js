@@ -14,3 +14,14 @@ import { registerFcmTokenHandler } from '../controllers/customerProfile.controll
 
 router.post('/fcm-token', registerFcmTokenHandler);
 export default router;
+import {
+  getSavedPlacesHandler,
+  createSavedPlaceHandler,
+  updateSavedPlaceHandler,
+  deleteSavedPlaceHandler,
+} from '../controllers/customerProfile.controller.js';
+
+router.get('/saved-places', getSavedPlacesHandler);
+router.post('/saved-places', createSavedPlaceHandler);
+router.put('/saved-places/:id', updateSavedPlaceHandler);
+router.delete('/saved-places/:id', deleteSavedPlaceHandler);
