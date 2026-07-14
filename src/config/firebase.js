@@ -1,4 +1,5 @@
-import * as admin from 'firebase-admin';
+import { initializeApp, cert, getApps, getApp } from 'firebase-admin/app';
+import { getMessaging } from 'firebase-admin/messaging';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -16,10 +17,8 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 
 console.log('[Firebase] Service account loaded:', serviceAccount?.project_id || 'MISSING');
 
-const app = admin.default.apps.length
-  ? admin.default.app()
-  : admin.default.initializeApp({
-      credential: admin.default.credential.cert(serviceAccount),
-    });
+const app = getApps().length
+  ? getApp()
+  : initializeApp({ credential: cert(serviceAccount) });
 
-export default admin.default;
+export const messaging = getMessaging(app);

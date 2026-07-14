@@ -1,14 +1,10 @@
-import admin from '../config/firebase.js';
+import { messaging } from '../config/firebase.js';
 
-// Sends a push notification. Returns true on success, false on failure
-// (e.g. invalid/stale token) — callers should not crash if this fails,
-// since sockets are still the primary real-time channel; push is a backup
-// for when the app is fully closed.
 export const sendPushNotification = async (fcmToken, { title, body, data = {} }) => {
   if (!fcmToken) return false;
 
   try {
-    await admin.messaging().send({
+    await messaging.send({
       token: fcmToken,
       notification: { title, body },
       data: Object.fromEntries(
