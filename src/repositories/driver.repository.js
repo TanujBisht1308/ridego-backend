@@ -109,3 +109,54 @@ export const incrementTotalRides = async (driverId) => {
 export const updateFcmToken = async (driverId, token) => {
   await pool.query('UPDATE drivers SET fcm_token = $1 WHERE id = $2', [token, driverId]);
 };
+export const getBankDetails = async (driverId) => {
+  const result = await pool.query(
+    'SELECT bank_account_holder, bank_account_number, bank_ifsc FROM drivers WHERE id = $1',
+    [driverId]
+  );
+  return result.rows[0] || null;
+};
+
+export const updateBankDetails = async (driverId, { accountHolder, accountNumber, ifsc }) => {
+  const result = await pool.query(
+    `UPDATE drivers
+     SET bank_account_holder = $1, bank_account_number = $2, bank_ifsc = $3, updated_at = NOW()
+     WHERE id = $4
+     RETURNING bank_account_holder, bank_account_number, bank_ifsc`,
+    [accountHolder, accountNumber, ifsc, driverId]
+  );
+  return result.rows[0];
+};
+
+export const updateNotificationChannel = async (driverId, channelId) => {
+  await pool.query('UPDATE drivers SET notification_channel_id = $1 WHERE id = $2', [channelId, driverId]);
+};
+
+export const getNotificationChannel = async (driverId) => {
+  const result = await pool.query('SELECT notification_channel_id FROM drivers WHERE id = $1', [driverId]);
+  return result.rows[0]?.notification_channel_id || 'ridego_rides';
+};
+
+export const insertDriverNotification = async (driverId, { title, body, type = 'general' }) => {
+  await pool.query(
+    'INSERT INTO driver_notifications (driver_id, title, body, type) VALUES ($1, $2, $3, $4)',
+    [driverId, title, body, type]
+  );
+};
+
+export const getDriverNotifications = async (driverId, page = 1, limit = 20) => {
+  const offset = (page - 1) * limit;
+  const result = await pool.query(
+    `SELECT id, title, body, type, is_read, created_at
+     FROM driver_notifications
+     WHERE driver_id = $1
+     ORDER BY created_at DESC
+     LIMIT $2 OFFSET $3`,
+    [driverId, limit, offset]
+  );
+  return result.rows;
+};
+
+export const markNotificationsRead = async (driverId) => {
+  await pool.query('UPDATE driver_notifications SET is_read = true WHERE driver_id = $1 AND is_read = false', [driverId]);
+};

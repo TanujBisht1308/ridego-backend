@@ -95,11 +95,11 @@ export const getIO = () => {
 
 const getDriverFcmTokensForVehicleType = async (vehicleType) => {
   const result = await pool.query(
-    `SELECT fcm_token FROM drivers
+    `SELECT id, fcm_token, notification_channel_id FROM drivers
      WHERE vehicle_type = $1 AND is_online = true AND fcm_token IS NOT NULL`,
     [vehicleType]
   );
-  return result.rows.map((r) => r.fcm_token);
+  return result.rows;
 };
 
 const getCustomerFcmToken = async (customerId) => {
@@ -121,15 +121,23 @@ const getDriverFcmToken = async (driverId) => {
 export const notifyNewRideToDrivers = async (vehicleType, ride) => {
   getIO().to(`vehicleType:${vehicleType}`).emit('ride:incoming', ride);
 
-  const tokens = await getDriverFcmTokensForVehicleType(vehicleType);
+  const drivers = await getDriverFcmTokensForVehicleType(vehicleType);
+  const title = 'New Ride Request';
+  const body = `${ride.pickupLocation.address} → ${ride.dropLocation.address}`;
+
   await Promise.all(
-    tokens.map((token) =>
-      sendPushNotification(token, {
-        title: 'New Ride Request',
-        body: `${ride.pickupLocation.address} → ${ride.dropLocation.address}`,
+    drivers.map(async (d) => {
+      await sendPushNotification(d.fcm_token, {
+        title,
+        body,
         data: { type: 'ride_request', rideId: ride.rideId },
-      })
-    )
+        channelId: d.notification_channel_id || 'ridego_rides',
+      });
+      await pool.query(
+        'INSERT INTO driver_notifications (driver_id, title, body, type) VALUES ($1, $2, $3, $4)',
+        [d.id, title, body, 'ride_request']
+      );
+    })
   );
 };
 

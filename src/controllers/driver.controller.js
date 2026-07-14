@@ -68,3 +68,49 @@ export const registerFcmTokenHandler = async (req, res, next) => {
     next(err);
   }
 };
+import {
+  fetchBankDetails,
+  saveBankDetails,
+  setNotificationChannel,
+  fetchNotifications,
+} from '../services/driver.service.js';
+
+export const getBankDetailsHandler = async (req, res, next) => {
+  try {
+    const details = await fetchBankDetails(req.driver.id);
+    return successResponse(res, details, 'Bank details fetched');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateBankDetailsHandler = async (req, res, next) => {
+  try {
+    const { accountHolder, accountNumber, ifsc } = req.body;
+    const details = await saveBankDetails(req.driver.id, { accountHolder, accountNumber, ifsc });
+    return successResponse(res, details, 'Bank details updated');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateNotificationChannelHandler = async (req, res, next) => {
+  try {
+    const { channelId } = req.body;
+    await setNotificationChannel(req.driver.id, channelId);
+    return successResponse(res, null, 'Notification sound updated');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getNotificationsHandler = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 20;
+    const notifications = await fetchNotifications(req.driver.id, page, limit);
+    return successResponse(res, notifications, 'Notifications fetched');
+  } catch (err) {
+    next(err);
+  }
+};

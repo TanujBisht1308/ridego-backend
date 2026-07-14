@@ -80,3 +80,45 @@ import { updateFcmToken as saveDriverFcmToken } from '../repositories/driver.rep
 export const registerFcmToken = async (driverId, token) => {
   await saveDriverFcmToken(driverId, token);
 };
+import {
+  getBankDetails,
+  updateBankDetails,
+  updateNotificationChannel,
+  getDriverNotifications,
+  markNotificationsRead,
+} from '../repositories/driver.repository.js';
+
+export const fetchBankDetails = async (driverId) => {
+  const details = await getBankDetails(driverId);
+  return {
+    accountHolder: details?.bank_account_holder || null,
+    accountNumber: details?.bank_account_number || null,
+    ifsc: details?.bank_ifsc || null,
+  };
+};
+
+export const saveBankDetails = async (driverId, data) => {
+  const updated = await updateBankDetails(driverId, data);
+  return {
+    accountHolder: updated.bank_account_holder,
+    accountNumber: updated.bank_account_number,
+    ifsc: updated.bank_ifsc,
+  };
+};
+
+export const setNotificationChannel = async (driverId, channelId) => {
+  await updateNotificationChannel(driverId, channelId);
+};
+
+export const fetchNotifications = async (driverId, page, limit) => {
+  const notifications = await getDriverNotifications(driverId, page, limit);
+  await markNotificationsRead(driverId);
+  return notifications.map((n) => ({
+    id: n.id,
+    title: n.title,
+    body: n.body,
+    type: n.type,
+    isRead: n.is_read,
+    createdAt: n.created_at,
+  }));
+};
