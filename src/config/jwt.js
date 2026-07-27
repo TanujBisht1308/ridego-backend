@@ -19,3 +19,9 @@ export const verifyAccessToken = (token) => jwt.verify(token, env.jwt.secret);
 
 export const verifyRefreshTokenSignature = (token) =>
   jwt.verify(token, env.jwt.refreshSecret);
+export const generateAdminAccessToken = (payload) =>
+  jwt.sign({ ...payload, type: 'admin_access' }, env.jwt.secret, {
+    expiresIn: '8h',
+  });
+
+export const verifyAdminAccessToken = (token) => jwt.verify(token, env.jwt.secret);

@@ -9,7 +9,7 @@ import customerProfileRoutes from './customerProfile.routes.js';
 import customerRideRoutes from './customerRide.routes.js';
 import placesRoutes from './places.routes.js';
 import walletRoutes from './wallet.routes.js';
-
+import adminRoutes from './admin.routes.js';
 const router = Router();
 
 // Driver
@@ -25,7 +25,7 @@ router.use('/customer', customerProfileRoutes);
 router.use('/customer/rides', customerRideRoutes);
 router.use('/customer/places', placesRoutes);
 router.use('/customer/wallet', walletRoutes);
-
+router.use('/admin', adminRoutes);
 router.get('/health', (req, res) => {
   res.json({
     success: true,
