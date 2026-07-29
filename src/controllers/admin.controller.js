@@ -77,3 +77,47 @@ export const suspendDriverHandler = async (req, res, next) => {
     next(err);
   }
 };
+import {
+  fetchCustomers,
+  fetchCustomerDetail,
+  blockCustomerAccount,
+} from '../services/admin.service.js';
+
+export const getCustomersHandler = async (req, res, next) => {
+  try {
+    const { search = '', status = 'all', page = 1, limit = 20 } = req.query;
+    const result = await fetchCustomers(search, status, parseInt(page, 10), parseInt(limit, 10));
+    return successResponse(res, result, 'Customers fetched');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getCustomerDetailHandler = async (req, res, next) => {
+  try {
+    const detail = await fetchCustomerDetail(req.params.id);
+    if (!detail) return errorResponse(res, 'Customer not found', 404);
+    return successResponse(res, detail, 'Customer detail fetched');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const blockCustomerHandler = async (req, res, next) => {
+  try {
+    const { block } = req.body;
+    await blockCustomerAccount(req.params.id, block);
+    return successResponse(res, null, block ? 'Customer blocked' : 'Customer unblocked');
+  } catch (err) {
+    next(err);
+  }
+};
+import {
+  getCustomersHandler,
+  getCustomerDetailHandler,
+  blockCustomerHandler,
+} from '../controllers/admin.controller.js';
+
+router.get('/customers', authenticateAdmin, getCustomersHandler);
+router.get('/customers/:id', authenticateAdmin, getCustomerDetailHandler);
+router.put('/customers/:id/block', authenticateAdmin, blockCustomerHandler);

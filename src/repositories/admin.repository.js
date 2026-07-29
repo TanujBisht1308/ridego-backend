@@ -107,3 +107,74 @@ export const suspendDriverAccount = async (driverId, suspended) => {
     [suspended, driverId]
   );
 };
+export const getAllCustomers = async (search, status, page = 1, limit = 20) => {
+  const offset = (page - 1) * limit;
+  const conditions = [];
+  const values = [];
+  let i = 1;
+
+  if (search) {
+    conditions.push(`(full_name ILIKE $${i} OR phone ILIKE $${i} OR email ILIKE $${i})`);
+    values.push(`%${search}%`);
+    i++;
+  }
+  if (status === 'blocked') {
+    conditions.push('is_blocked = true');
+  } else if (status === 'active') {
+    conditions.push('is_blocked = false');
+  }
+
+  const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const result = await pool.query(
+    `SELECT id, phone, full_name, email, wallet_balance, is_blocked, created_at
+     FROM customers
+     ${whereClause}
+     ORDER BY created_at DESC
+     LIMIT $${i} OFFSET $${i + 1}`,
+    [...values, limit, offset]
+  );
+
+  const countResult = await pool.query(
+    `SELECT COUNT(*)::int AS total FROM customers ${whereClause}`,
+    values
+  );
+
+  return { customers: result.rows, total: countResult.rows[0].total };
+};
+
+export const getCustomerFullDetail = async (customerId) => {
+  const customer = await pool.query('SELECT * FROM customers WHERE id = $1', [customerId]);
+  if (!customer.rows[0]) return null;
+
+  const rideStats = await pool.query(
+    `SELECT COUNT(*)::int AS total_rides,
+            COUNT(*) FILTER (WHERE status = 'completed')::int AS completed_rides,
+            COUNT(*) FILTER (WHERE status = 'cancelled')::int AS cancelled_rides
+     FROM rides WHERE passenger_id = $1`,
+    [customerId]
+  );
+
+  const recentRides = await pool.query(
+    `SELECT id, pickup_address, drop_address, final_fare, status, completed_at
+     FROM rides WHERE passenger_id = $1 ORDER BY created_at DESC LIMIT 10`,
+    [customerId]
+  );
+
+  const walletTransactions = await pool.query(
+    `SELECT id, type, amount, description, created_at
+     FROM wallet_transactions WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 10`,
+    [customerId]
+  );
+
+  return {
+    customer: customer.rows[0],
+    rideStats: rideStats.rows[0],
+    recentRides: recentRides.rows,
+    walletTransactions: walletTransactions.rows,
+  };
+};
+
+export const toggleCustomerBlock = async (customerId, blocked) => {
+  await pool.query('UPDATE customers SET is_blocked = $1 WHERE id = $2', [blocked, customerId]);
+};

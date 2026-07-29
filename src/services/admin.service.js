@@ -41,3 +41,20 @@ export const verifyDriver = async (driverId, approve) => {
 export const toggleDriverSuspension = async (driverId, suspend) => {
   await suspendDriverAccount(driverId, suspend);
 };
+import {
+  getAllCustomers,
+  getCustomerFullDetail,
+  toggleCustomerBlock,
+} from '../repositories/admin.repository.js';
+
+export const fetchCustomers = async (search, status, page, limit) => {
+  return getAllCustomers(search, status, page, limit);
+};
+
+export const fetchCustomerDetail = async (customerId) => {
+  return getCustomerFullDetail(customerId);
+};
+
+export const blockCustomerAccount = async (customerId, block) => {
+  await toggleCustomerBlock(customerId, block);
+};
