@@ -31,3 +31,49 @@ export const getDashboardHandler = async (req, res, next) => {
     next(err);
   }
 };
+import {
+  fetchDrivers,
+  fetchDriverDetail,
+  verifyDriver,
+  toggleDriverSuspension,
+} from '../services/admin.service.js';
+
+export const getDriversHandler = async (req, res, next) => {
+  try {
+    const { search = '', status = 'all', page = 1, limit = 20 } = req.query;
+    const result = await fetchDrivers(search, status, parseInt(page, 10), parseInt(limit, 10));
+    return successResponse(res, result, 'Drivers fetched');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getDriverDetailHandler = async (req, res, next) => {
+  try {
+    const detail = await fetchDriverDetail(req.params.id);
+    if (!detail) return errorResponse(res, 'Driver not found', 404);
+    return successResponse(res, detail, 'Driver detail fetched');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const verifyDriverHandler = async (req, res, next) => {
+  try {
+    const { approve } = req.body;
+    await verifyDriver(req.params.id, approve);
+    return successResponse(res, null, approve ? 'Driver verified' : 'Driver rejected');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const suspendDriverHandler = async (req, res, next) => {
+  try {
+    const { suspend } = req.body;
+    await toggleDriverSuspension(req.params.id, suspend);
+    return successResponse(res, null, suspend ? 'Driver suspended' : 'Driver reinstated');
+  } catch (err) {
+    next(err);
+  }
+};

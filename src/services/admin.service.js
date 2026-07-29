@@ -19,3 +19,25 @@ export const loginAdmin = async (email, password) => {
 export const fetchLogs = async (limit, level) => getRecentLogs(limit, level);
 
 export const fetchDashboardStats = async () => getDashboardCounts();
+import {
+  getAllDrivers,
+  getDriverFullDetail,
+  setDriverVerification,
+  suspendDriverAccount,
+} from '../repositories/admin.repository.js';
+
+export const fetchDrivers = async (search, status, page, limit) => {
+  return getAllDrivers(search, status, page, limit);
+};
+
+export const fetchDriverDetail = async (driverId) => {
+  return getDriverFullDetail(driverId);
+};
+
+export const verifyDriver = async (driverId, approve) => {
+  await setDriverVerification(driverId, approve);
+};
+
+export const toggleDriverSuspension = async (driverId, suspend) => {
+  await suspendDriverAccount(driverId, suspend);
+};

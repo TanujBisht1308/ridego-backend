@@ -32,3 +32,78 @@ export const getDashboardCounts = async () => {
     onlineDrivers: onlineDrivers.rows[0].total,
   };
 };
+export const getAllDrivers = async (search, status, page = 1, limit = 20) => {
+  const offset = (page - 1) * limit;
+  const conditions = [];
+  const values = [];
+  let i = 1;
+
+  if (search) {
+    conditions.push(`(full_name ILIKE $${i} OR phone ILIKE $${i} OR vehicle_number ILIKE $${i})`);
+    values.push(`%${search}%`);
+    i++;
+  }
+  if (status === 'online') {
+    conditions.push('is_online = true');
+  } else if (status === 'offline') {
+    conditions.push('is_online = false');
+  } else if (status === 'pending_verification') {
+    conditions.push('is_verified = false');
+  } else if (status === 'verified') {
+    conditions.push('is_verified = true');
+  }
+
+  const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const result = await pool.query(
+    `SELECT id, phone, full_name, email, vehicle_number, vehicle_type,
+            is_verified, is_online, rating, total_rides, created_at
+     FROM drivers
+     ${whereClause}
+     ORDER BY created_at DESC
+     LIMIT $${i} OFFSET $${i + 1}`,
+    [...values, limit, offset]
+  );
+
+  const countResult = await pool.query(
+    `SELECT COUNT(*)::int AS total FROM drivers ${whereClause}`,
+    values
+  );
+
+  return { drivers: result.rows, total: countResult.rows[0].total };
+};
+
+export const getDriverFullDetail = async (driverId) => {
+  const driver = await pool.query('SELECT * FROM drivers WHERE id = $1', [driverId]);
+  if (!driver.rows[0]) return null;
+
+  const documents = await pool.query('SELECT * FROM driver_documents WHERE driver_id = $1', [driverId]);
+  const earnings = await pool.query(
+    `SELECT COALESCE(SUM(total_amount), 0)::float AS total_earnings, COUNT(*)::int AS total_rides
+     FROM earnings WHERE driver_id = $1`,
+    [driverId]
+  );
+  const recentRides = await pool.query(
+    `SELECT id, passenger_name, pickup_address, drop_address, final_fare, status, completed_at
+     FROM rides WHERE driver_id = $1 ORDER BY created_at DESC LIMIT 10`,
+    [driverId]
+  );
+
+  return {
+    driver: driver.rows[0],
+    documents: documents.rows[0] || null,
+    earnings: earnings.rows[0],
+    recentRides: recentRides.rows,
+  };
+};
+
+export const setDriverVerification = async (driverId, isVerified) => {
+  await pool.query('UPDATE drivers SET is_verified = $1 WHERE id = $2', [isVerified, driverId]);
+};
+
+export const suspendDriverAccount = async (driverId, suspended) => {
+  await pool.query(
+    'UPDATE drivers SET is_online = false, is_suspended = $1 WHERE id = $2',
+    [suspended, driverId]
+  );
+};

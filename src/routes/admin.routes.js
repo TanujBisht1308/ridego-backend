@@ -9,3 +9,14 @@ router.get('/dashboard', authenticateAdmin, getDashboardHandler);
 router.get('/logs', authenticateAdmin, getLogsHandler);
 
 export default router;
+import {
+  getDriversHandler,
+  getDriverDetailHandler,
+  verifyDriverHandler,
+  suspendDriverHandler,
+} from '../controllers/admin.controller.js';
+
+router.get('/drivers', authenticateAdmin, getDriversHandler);
+router.get('/drivers/:id', authenticateAdmin, getDriverDetailHandler);
+router.put('/drivers/:id/verify', authenticateAdmin, verifyDriverHandler);
+router.put('/drivers/:id/suspend', authenticateAdmin, suspendDriverHandler);
